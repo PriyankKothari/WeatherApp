@@ -4,6 +4,8 @@ using WeatherApp.Application.UseCases.Weather;
 using WeatherApp.Infrastructure.Services;
 using WeatherApp.ExternalWeatherApi.Client.ApiClients;
 using WeatherApp.ExternalWeatherApi.Client.Options;
+using Microsoft.OpenApi.Models;
+using WeatherApp.Api.Middlewares;
 
 var webApplicationBuilder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,33 @@ webApplicationBuilder.Services.AddControllersWithViews();
 // API Explorer
 webApplicationBuilder.Services.AddEndpointsApiExplorer();
 webApplicationBuilder.Services.AddSwaggerGen();
+//webApplicationBuilder.Services.AddSwaggerGen(options =>
+//{
+//    options.AddSecurityDefinition("X-API-KEY", new OpenApiSecurityScheme
+//    {
+//        Name = "X-API-KEY",
+//        Type = SecuritySchemeType.ApiKey,
+//        Scheme = "ApiKeyScheme",
+//        In = ParameterLocation.Header,
+//        Description = "ApiKey must appear in header"
+//    });
+
+//    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+//    {
+//        {
+//            new OpenApiSecurityScheme
+//            {
+//                Reference = new OpenApiReference
+//                {
+//                    Type = ReferenceType.SecurityScheme,
+//                    Id = "X-API-KEY"
+//                },
+//                In = ParameterLocation.Header
+//            },
+//            new string[]{}
+//        }
+//    });
+//});
 
 // API Versioning
 webApplicationBuilder.Services.AddApiVersioning(options =>
@@ -39,7 +68,7 @@ webApplicationBuilder.Services.AddApiVersioning(options =>
     options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
     options.ReportApiVersions = true;
     options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(), new HeaderApiVersionReader("x-api-version"));
+    options.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(), new HeaderApiVersionReader("options-api-version"));
 });
 
 webApplicationBuilder.Services.AddVersionedApiExplorer(options =>
@@ -64,6 +93,7 @@ if (webApplication.Environment.IsDevelopment())
     webApplication.UseSwaggerUI();
 }
 webApplication.UseHttpsRedirection();
+webApplication.UseMiddleware<ApiKeyAuthenticationMiddleware>();
 webApplication.UseAuthorization();
 webApplication.UseCors("CorsPolicy");
 
