@@ -5,7 +5,7 @@ namespace WeatherApp.Api.Middlewares
     /// <summary>
     /// ApiKey Authentication middleware.
     /// </summary>
-    public class ApiKeyAuthenticationMiddleware
+    internal class ApiKeyAuthenticationMiddleware
     {
         private const string ApiKeysSectionName = "Authentication:ApiKeys";
         private const string ApiKeyHeaderName = "X-API-KEY";
