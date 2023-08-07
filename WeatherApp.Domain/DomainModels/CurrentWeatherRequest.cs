@@ -5,7 +5,7 @@ namespace WeatherApp.Domain.DomainModels
     /// <summary>
     /// Query object to get current weather.
     /// </summary>
-    public sealed class CurrentWeatherQuery
+    public sealed class CurrentWeatherRequest
     {
         /// <summary>
         /// Gets or sets a city name.
@@ -16,7 +16,7 @@ namespace WeatherApp.Domain.DomainModels
 
         public string CountryCode { get; set; }
 
-        public CurrentWeatherQuery(string cityName, string stateCode, string countryCode)
+        public CurrentWeatherRequest(string cityName, string stateCode, string countryCode)
         {
             CityName = cityName;
             StateCode = stateCode;

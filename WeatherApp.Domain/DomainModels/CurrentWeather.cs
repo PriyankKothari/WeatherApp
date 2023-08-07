@@ -1,4 +1,4 @@
-﻿namespace WeatherApp.Core.Entities
+﻿namespace WeatherApp.Domain.DomainModels
 {
     /// <summary>
     /// Represents a weather entity.
