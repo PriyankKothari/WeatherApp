@@ -1,6 +1,6 @@
-﻿using WeatherApp.OpenWeatherMapApi.Client.DTOs;
+﻿using WeatherApp.ExternalWeatherApi.Client.DTOs;
 
-namespace WeatherApp.OpenWeatherMapApi.Client.ApiClients
+namespace WeatherApp.ExternalWeatherApi.Client.ApiClients
 {
     /// <summary>
     /// Represents Api Client for external weather api.

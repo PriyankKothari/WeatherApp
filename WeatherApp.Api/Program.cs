@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc.Versioning;
 using WeatherApp.Application.Services;
 using WeatherApp.Application.UseCases.Weather;
 using WeatherApp.Infrastructure.Services;
-using WeatherApp.OpenWeatherMapApi.Client.ApiClients;
-using WeatherApp.OpenWeatherMapApi.Client.Options;
+using WeatherApp.ExternalWeatherApi.Client.ApiClients;
+using WeatherApp.ExternalWeatherApi.Client.Options;
 
 var webApplicationBuilder = WebApplication.CreateBuilder(args);
 

@@ -1,4 +1,4 @@
-﻿namespace WeatherApp.OpenWeatherMapApi.Client.Options
+﻿namespace WeatherApp.ExternalWeatherApi.Client.Options
 {
     /// <summary>
     /// External Weather Api Options

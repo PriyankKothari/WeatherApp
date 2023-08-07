@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace WeatherApp.OpenWeatherMapApi.Client.DTOs
+namespace WeatherApp.ExternalWeatherApi.Client.DTOs
 {
     /// <summary>
     /// Weather Data.

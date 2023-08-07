@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using WeatherApp.OpenWeatherMapApi.Client.DTOs;
-using WeatherApp.OpenWeatherMapApi.Client.Options;
+using WeatherApp.ExternalWeatherApi.Client.DTOs;
+using WeatherApp.ExternalWeatherApi.Client.Options;
 
-namespace WeatherApp.OpenWeatherMapApi.Client.ApiClients
+namespace WeatherApp.ExternalWeatherApi.Client.ApiClients
 {
     /// <summary>
     /// Implements methods communicating with the external weather api.

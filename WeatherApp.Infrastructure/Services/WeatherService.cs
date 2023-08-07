@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using WeatherApp.Application.Services;
 using WeatherApp.Domain.DomainModels;
-using WeatherApp.OpenWeatherMapApi.Client.ApiClients;
-using WeatherApp.OpenWeatherMapApi.Client.DTOs;
+using WeatherApp.ExternalWeatherApi.Client.ApiClients;
+using WeatherApp.ExternalWeatherApi.Client.DTOs;
 
 namespace WeatherApp.Infrastructure.Services
 {
