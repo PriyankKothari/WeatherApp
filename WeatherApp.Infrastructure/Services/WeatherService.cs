@@ -51,7 +51,7 @@ namespace WeatherApp.Infrastructure.Services
                 _logger.LogError($"{nameof(IWeatherService)} cannot get current weather.", exception);
             }
 
-            return currentWeather;            
+            return currentWeather;
         }
     }
 }
