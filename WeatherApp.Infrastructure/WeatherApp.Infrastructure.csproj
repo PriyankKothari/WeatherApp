@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WeatherApp.Application\WeatherApp.Application.csproj" />
-    <ProjectReference Include="..\WeatherApp.Domain\WeatherApp.Domain.csproj" />
+    <ProjectReference Include="..\WeatherApp.OpenWeatherMapApi.Client\WeatherApp.ExternalWeatherApi.Client.csproj" />
   </ItemGroup>
 
 </Project>

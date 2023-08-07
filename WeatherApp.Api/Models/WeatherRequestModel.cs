@@ -1,5 +1,8 @@
 ﻿namespace WeatherApp.Api.Models
 {
+    /// <summary>
+    /// Weather Request Model.
+    /// </summary>
     public class WeatherRequestModel
     {
         /// <summary>

@@ -2,11 +2,16 @@ using Microsoft.AspNetCore.Mvc.Versioning;
 using WeatherApp.Application.Services;
 using WeatherApp.Application.UseCases.Weather;
 using WeatherApp.Infrastructure.Services;
+using WeatherApp.OpenWeatherMapApi.Client.ApiClients;
+using WeatherApp.OpenWeatherMapApi.Client.Options;
 
 var webApplicationBuilder = WebApplication.CreateBuilder(args);
 
 // Build Services
-// Add CORS
+// Read configuration section "ExternalWeatherApiSettings" into IOptions<ExternalWeatherApiOptions>
+webApplicationBuilder.Services.Configure<ExternalWeatherApiOptions>(webApplicationBuilder.Configuration.GetSection("ExternalWeatherApiSettings"));
+
+// CORS
 webApplicationBuilder.Services.AddCors(policy =>
 {
     policy.AddPolicy("CorsPolicy", options =>
@@ -17,6 +22,9 @@ webApplicationBuilder.Services.AddCors(policy =>
             .AllowAnyMethod();
     });
 });
+
+// IHttpClientFactory.
+webApplicationBuilder.Services.AddHttpClient();
 
 // Controllers
 webApplicationBuilder.Services.AddControllersWithViews();
@@ -42,6 +50,7 @@ webApplicationBuilder.Services.AddVersionedApiExplorer(options =>
 
 // Services
 webApplicationBuilder.Services
+    .AddScoped<IExternalWeatherApiClient, ExternalWeatherApiClient>()
     .AddScoped<IWeatherService, WeatherService>()
     .AddScoped<ICurrentWeatherHandler, CurrentWeatherHandler>();
 
