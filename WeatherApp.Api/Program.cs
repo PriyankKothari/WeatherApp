@@ -1,27 +1,74 @@
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.AspNetCore.Mvc.Versioning;
+using WeatherApp.Application.Services;
+using WeatherApp.Application.UseCases.Weather;
+using WeatherApp.Infrastructure.Services;
 
-// Add services to the container.
+var webApplicationBuilder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+// Build Services
+// Add CORS
+webApplicationBuilder.Services.AddCors(policy =>
+{
+    policy.AddPolicy("CorsPolicy", options =>
+    {
+        options
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
-var app = builder.Build();
+// Controllers
+webApplicationBuilder.Services.AddControllersWithViews();
+
+// API Explorer
+webApplicationBuilder.Services.AddEndpointsApiExplorer();
+webApplicationBuilder.Services.AddSwaggerGen();
+
+// API Versioning
+webApplicationBuilder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(), new HeaderApiVersionReader("x-api-version"));
+});
+
+webApplicationBuilder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// Services
+webApplicationBuilder.Services
+    .AddScoped<IWeatherService, WeatherService>()
+    .AddScoped<ICurrentWeatherHandler, CurrentWeatherHandler>();
+
+// Build Web Application
+var webApplication = webApplicationBuilder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (webApplication.Environment.IsDevelopment())
 {
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    webApplication.UseSwagger();
+    webApplication.UseSwaggerUI();
 }
+webApplication.UseHttpsRedirection();
+webApplication.UseAuthorization();
+webApplication.UseCors("CorsPolicy");
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();
+//webApplication.UseHttpsRedirection();
+//webApplication.UseStaticFiles();
+//webApplication.UseRouting();
 
-
-app.MapControllerRoute(
+webApplication.MapControllerRoute(
     name: "default",
-    pattern: "{controller}/{action=Index}/{id?}");
+    pattern: "{controller}/{action}/{string}",
+    new { controller = "Weather", action="Index" });
 
-app.MapFallbackToFile("index.html"); ;
+webApplication.MapControllers();
 
-app.Run();
+webApplication.MapFallbackToFile("index.html"); ;
+
+webApplication.Run();
