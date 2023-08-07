@@ -10,18 +10,11 @@ namespace WeatherApp.Domain.DomainModels
         /// <summary>
         /// Gets or sets a city name.
         /// </summary>
-        public string CityName { get; set; }
+        public string CityName { get; set; } = string.Empty;
 
-        public string StateCode { get; set; }
+        public string StateCode { get; set; } = string.Empty;
 
-        public string CountryCode { get; set; }
-
-        public CurrentWeatherRequest(string cityName, string stateCode, string countryCode)
-        {
-            CityName = cityName;
-            StateCode = stateCode;
-            CountryCode = countryCode;
-        }
+        public string CountryCode { get; set; } = string.Empty;        
 
         public override string ToString()
         {
