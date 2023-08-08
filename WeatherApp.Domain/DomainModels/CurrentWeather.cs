@@ -6,9 +6,9 @@
     public sealed class CurrentWeather
     {
         /// <summary>
-        /// Gets or sets a City Name.
+        /// Gets or sets a City.
         /// </summary>
-        public string CityName { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets weather condition description.
