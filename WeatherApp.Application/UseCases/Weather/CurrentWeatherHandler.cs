@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using WeatherApp.Application.Services;
 using WeatherApp.Domain.DomainModels;
+using WeatherApp.Domain.HttpResponseModels;
 
 namespace WeatherApp.Application.UseCases.Weather
 {
@@ -27,22 +28,23 @@ namespace WeatherApp.Application.UseCases.Weather
         /// </summary>
         /// <param name="request">A request such as City name.</param>
         /// <returns>A <see cref="CurrentWeather" />.</returns>
-        public async Task<CurrentWeather> HandleAsync(CurrentWeatherRequest request, CancellationToken cancellationToken)
+        public async Task<HttpDataResponse<CurrentWeather>> HandleAsync(CurrentWeatherRequest request, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(nameof(request));
 
-            CurrentWeather? currentWeather = null;
+            HttpDataResponse<CurrentWeather>? httpDataResponse = null;
 
             try
             {
-                currentWeather = await _weatherService.GetCurrentWeather(request.ToString(), cancellationToken).ConfigureAwait(false);
+                httpDataResponse = await _weatherService.GetCurrentWeather(request.ToString(), cancellationToken).ConfigureAwait(false);
             }
             catch (Exception exception)
             {
                 _logger.LogError("An error occured while getting current weather", exception);
+                return new HttpDataResponse<CurrentWeather> { Errors = httpDataResponse.Errors, StatusCode = httpDataResponse.StatusCode };
             }
 
-            return currentWeather;
+            return httpDataResponse;
         }
     }
 }

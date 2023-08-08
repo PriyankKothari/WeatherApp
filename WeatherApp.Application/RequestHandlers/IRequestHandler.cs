@@ -1,4 +1,6 @@
-﻿namespace WeatherApp.Application.Abstrations
+﻿using WeatherApp.Domain.HttpResponseModels;
+
+namespace WeatherApp.Application.Abstrations
 {
     /// <summary>
     /// Represents a generic request handler interface.
@@ -12,6 +14,6 @@
         /// </summary>
         /// <param name="request"><typeparamref name="TRequest" />.</param>
         /// <returns><typeparamref name="TResponse" />.</returns>
-        Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken);
+        Task<HttpDataResponse<TResponse>> HandleAsync(TRequest request, CancellationToken cancellationToken);
     }
 }
