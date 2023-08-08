@@ -33,7 +33,7 @@ namespace WeatherApp.Api.Controllers
         [ProducesResponseType(500)]
         [HttpGet]
         [Route("current")]
-        public async Task<IActionResult> Index([FromRoute] WeatherRequestModel weatherRequestModel)
+        public async Task<IActionResult> Index([FromQuery] WeatherRequestModel weatherRequestModel)
         {
             CurrentWeather currentWeather;
 
@@ -41,7 +41,8 @@ namespace WeatherApp.Api.Controllers
             {
                 CurrentWeatherRequest request = new()
                 {
-                    CityName = weatherRequestModel.CityName
+                    CityName = weatherRequestModel.CityName,
+                    CountryName = weatherRequestModel.CountryName ?? string.Empty
                 };
                 
                 currentWeather = await _currentWeatherHandler.HandleAsync(request, CancellationToken.None).ConfigureAwait(false);

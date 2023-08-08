@@ -17,7 +17,7 @@ namespace WeatherApp.ExternalWeatherApi.Client.DTOs
         /// Gets or sets Weather.
         /// </summary>
         [JsonProperty("weather")]
-        public IReadOnlyList<Weather> WeatherList { get; set; } = new List<Weather>();
+        public ICollection<Weather> WeatherList { get; set; } = new HashSet<Weather>();
     }
 
     /// <summary>

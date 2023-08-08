@@ -43,7 +43,7 @@ namespace WeatherApp.Infrastructure.Services
                 currentWeather = new CurrentWeather
                 {
                     CityName = currentWeatherResult.CityName,
-                    Description = currentWeatherResult.WeatherList[0].Description
+                    Description = currentWeatherResult.WeatherList.ToArray()[0].Description
                 };
             }
             catch (Exception exception)

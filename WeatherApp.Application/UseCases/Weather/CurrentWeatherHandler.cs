@@ -35,7 +35,7 @@ namespace WeatherApp.Application.UseCases.Weather
 
             try
             {
-                currentWeather = await _weatherService.GetCurrentWeather(request.CityName, cancellationToken).ConfigureAwait(false);
+                currentWeather = await _weatherService.GetCurrentWeather(request.ToString(), cancellationToken).ConfigureAwait(false);
             }
             catch (Exception exception)
             {
