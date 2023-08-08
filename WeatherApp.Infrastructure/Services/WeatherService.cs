@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Net;
 using WeatherApp.Application.Services;
 using WeatherApp.Domain.DomainModels;
+using WeatherApp.Domain.HttpResponseModels;
 using WeatherApp.ExternalWeatherApi.Client.ApiClients;
 using WeatherApp.ExternalWeatherApi.Client.DTOs;
 
@@ -11,17 +14,17 @@ namespace WeatherApp.Infrastructure.Services
     /// </summary>
     public sealed class WeatherService : IWeatherService
     {
-        private readonly IExternalWeatherApiClient _openWeatherMapHttpClient;
+        private readonly IExternalWeatherApiClient _externalWeatherApiHttpClient;
         private readonly ILogger<IWeatherService> _logger;
 
         /// <summary>
         /// Initializes a new instant of the <see cref="WeatherService" /> class.
         /// </summary>
-        /// <param name="openWeatherMapHttpClient"><see cref="IExternalWeatherApiClient" />.</param>
+        /// <param name="externalWeatherApiHttpClient"><see cref="IExternalWeatherApiClient" />.</param>
         /// <param name="logger"><see cref="ILogger" />.</param>
-        public WeatherService(IExternalWeatherApiClient openWeatherMapHttpClient, ILogger<IWeatherService> logger)
+        public WeatherService(IExternalWeatherApiClient externalWeatherApiHttpClient, ILogger<IWeatherService> logger)
         {
-            _openWeatherMapHttpClient = openWeatherMapHttpClient ?? throw new ArgumentNullException(nameof(openWeatherMapHttpClient));
+            _externalWeatherApiHttpClient = externalWeatherApiHttpClient ?? throw new ArgumentNullException(nameof(externalWeatherApiHttpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -30,28 +33,49 @@ namespace WeatherApp.Infrastructure.Services
         /// </summary>
         /// <param name="location">City name, State code (optional) and Country code (optional without state code, required with state code) separated by comma.</param>
         /// <param name="cancellationToken"><see cref="CancellationToken" />.</param>
-        /// <returns>A <see cref="CurrentWeather" />.</returns>
-        public async Task<CurrentWeather> GetCurrentWeather(string location, CancellationToken cancellationToken)
+        /// <returns>A <see cref="HttpDataResponse{CurrentWeather}" />.</returns>
+        public async Task<HttpDataResponse<CurrentWeather>> GetCurrentWeather(string location, CancellationToken cancellationToken)
         {
-            CurrentWeather currentWeather = null;
+            HttpDataResponse<CurrentWeather>? httpDataResponse = new HttpDataResponse<CurrentWeather>();
 
             try
             {
-                WeatherData currentWeatherResult =
-                    await _openWeatherMapHttpClient.GetCurrentWeather(location, cancellationToken).ConfigureAwait(false);
+                HttpResponseMessage responseMessage =
+                    await _externalWeatherApiHttpClient.GetCurrentWeather(location, cancellationToken).ConfigureAwait(false);
 
-                currentWeather = new CurrentWeather
+                if (responseMessage.IsSuccessStatusCode)
                 {
-                    CityName = currentWeatherResult.CityName,
-                    Description = currentWeatherResult.WeatherList.ToArray()[0].Description
-                };
+                    string weatherDataJson = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                    if (!string.IsNullOrEmpty(weatherDataJson))
+                    {
+                        WeatherData? weatherData = JsonConvert.DeserializeObject<WeatherData>(weatherDataJson);
+
+                        if (weatherData is not null)
+                        {
+                            httpDataResponse.Data = new CurrentWeather
+                            {
+                                City = weatherData.City,
+                                Description = weatherData.WeatherList.ToArray()[0].Description
+                            };
+                        }
+                    }
+                }
+                else
+                {
+                    httpDataResponse.Errors = new List<string> { responseMessage.ReasonPhrase?.ToString() ?? string.Empty };
+                }
+
+                httpDataResponse.StatusCode = responseMessage.StatusCode;
             }
             catch (Exception exception)
             {
-                _logger.LogError($"{nameof(IWeatherService)} cannot get current weather.", exception);
+                _logger.LogError("Something went wrong while attempting to get current weather using External Weather Api Client", exception);
+                httpDataResponse.Errors = new List<string> { exception.Message };
+                httpDataResponse.StatusCode = HttpStatusCode.InternalServerError;
             }
 
-            return currentWeather;
+            return httpDataResponse;
         }
     }
 }
