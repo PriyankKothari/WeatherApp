@@ -6,6 +6,7 @@ using WeatherApp.ExternalWeatherApi.Client.ApiClients;
 using WeatherApp.ExternalWeatherApi.Client.Options;
 using WeatherApp.Api.Middlewares;
 using AspNetCoreRateLimit;
+using Microsoft.OpenApi.Models;
 
 var webApplicationBuilder = WebApplication.CreateBuilder(args);
 
@@ -45,37 +46,6 @@ webApplicationBuilder.Services.AddHttpClient();
 // Controllers
 webApplicationBuilder.Services.AddControllersWithViews();
 
-// API Explorer
-webApplicationBuilder.Services.AddEndpointsApiExplorer();
-webApplicationBuilder.Services.AddSwaggerGen();
-//webApplicationBuilder.Services.AddSwaggerGen(policies =>
-//{
-//    policies.AddSecurityDefinition("X-API-KEY", new OpenApiSecurityScheme
-//    {
-//        Name = "X-API-KEY",
-//        Type = SecuritySchemeType.ApiKey,
-//        Scheme = "ApiKeyScheme",
-//        In = ParameterLocation.Header,
-//        Description = "ApiKey must appear in header"
-//    });
-
-//    policies.AddSecurityRequirement(new OpenApiSecurityRequirement
-//    {
-//        {
-//            new OpenApiSecurityScheme
-//            {
-//                Reference = new OpenApiReference
-//                {
-//                    Type = ReferenceType.SecurityScheme,
-//                    Id = "X-API-KEY"
-//                },
-//                In = ParameterLocation.Header
-//            },
-//            new string[]{}
-//        }
-//    });
-//});
-
 // API Versioning
 webApplicationBuilder.Services.AddApiVersioning(options =>
 {
@@ -91,6 +61,36 @@ webApplicationBuilder.Services.AddVersionedApiExplorer(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
+// API Explorer
+webApplicationBuilder.Services.AddEndpointsApiExplorer();
+webApplicationBuilder.Services.AddSwaggerGen(policies =>
+{
+    policies.AddSecurityDefinition("X-API-KEY", new OpenApiSecurityScheme
+    {
+        Name = "X-API-KEY",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "ApiKeyScheme",
+        In = ParameterLocation.Header,
+        Description = "ApiKey must appear in header"
+    });
+
+    policies.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "X-API-KEY"
+                },
+                In = ParameterLocation.Header
+            },
+            new string[]{}
+        }
+    });
+});
+
 // Services
 webApplicationBuilder.Services
     .AddScoped<IExternalWeatherApiClient, ExternalWeatherApiClient>()
@@ -101,14 +101,13 @@ webApplicationBuilder.Services
 var webApplication = webApplicationBuilder.Build();
 
 // Configure the HTTP request pipeline.
-if (webApplication.Environment.IsDevelopment())
-{
-    webApplication.UseSwagger();
-    webApplication.UseSwaggerUI();
-}
+webApplication.UseSwagger();
+webApplication.UseSwaggerUI();
 
 // Https Redirection
 webApplication.UseHttpsRedirection();
+webApplication.UseStaticFiles();
+webApplication.UseRouting();
 
 // Authentication and Authorization
 webApplication.UseMiddleware<ApiKeyAuthenticationMiddleware>();
@@ -117,10 +116,6 @@ webApplication.UseCors("CorsPolicy");
 
 // Client Rate Limiting
 webApplication.UseClientRateLimiting();
-
-//webApplication.UseHttpsRedirection();
-//webApplication.UseStaticFiles();
-//webApplication.UseRouting();
 
 // Map Controller Route
 webApplication.MapControllerRoute(
