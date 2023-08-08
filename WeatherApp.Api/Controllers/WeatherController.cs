@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using WeatherApp.Api.Models;
 using WeatherApp.Application.UseCases.Weather;
 using WeatherApp.Domain.DomainModels;
@@ -35,8 +36,6 @@ namespace WeatherApp.Api.Controllers
         [Route("current")]
         public async Task<IActionResult> Index([FromQuery] WeatherRequestModel weatherRequestModel)
         {
-            CurrentWeather currentWeather;
-
             try
             {
                 CurrentWeatherRequest request = new()
@@ -45,14 +44,27 @@ namespace WeatherApp.Api.Controllers
                     CountryName = weatherRequestModel.CountryName ?? string.Empty
                 };
                 
-                currentWeather = await _currentWeatherHandler.HandleAsync(request, CancellationToken.None).ConfigureAwait(false);
+                var httpDataResponse =
+                    await _currentWeatherHandler.HandleAsync(request, CancellationToken.None).ConfigureAwait(false);
+
+                switch (httpDataResponse.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                        return Ok(httpDataResponse.Data);
+                    case HttpStatusCode.BadRequest:
+                        return BadRequest("Invalid parameters or parameters not provided");
+                    case HttpStatusCode.NotFound:
+                        return NotFound("City or Country not found");
+                    case HttpStatusCode.Unauthorized:
+                        return Unauthorized("Invalid API-KEY for External Weather API Endpoint");
+                    default:
+                        return Problem("Something went wrong while getting current weather information");
+                }
             }
             catch (Exception exception)
             {
                 return Problem(exception.Message, exception.StackTrace);
             }
-
-            return Ok(currentWeather);
         }
     }
 }

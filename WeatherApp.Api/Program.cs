@@ -14,7 +14,7 @@ var webApplicationBuilder = WebApplication.CreateBuilder(args);
 webApplicationBuilder.Services.Configure<ExternalWeatherApiOptions>(webApplicationBuilder.Configuration.GetSection("ExternalWeatherApiSettings"));
 
 // Read configuration section "ClientRateLimiting" into IOptions<ClientRateLimitOptions>
-webApplicationBuilder.Services.Configure<ClientRateLimitOptions>(options => webApplicationBuilder.Configuration.GetSection("ClientRateLimiting").Bind(options));
+webApplicationBuilder.Services.Configure<ClientRateLimitOptions>(webApplicationBuilder.Configuration.GetSection("ClientRateLimiting"));
 
 // For distributed memory cache e.g. Redis
 // webApplication.Services.AddDistributedMemoryCache();
