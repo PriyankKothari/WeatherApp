@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using WeatherApp.ExternalWeatherApi.Client.DTOs;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using WeatherApp.ExternalWeatherApi.Client.Options;
 
 namespace WeatherApp.ExternalWeatherApi.Client.ApiClients
@@ -11,42 +10,62 @@ namespace WeatherApp.ExternalWeatherApi.Client.ApiClients
     public sealed class ExternalWeatherApiClient : IExternalWeatherApiClient
     {
         private readonly HttpClient _httpClient;
-        private readonly IOptions<ExternalWeatherApiOptions> _options;
+        private readonly ILogger<ExternalWeatherApiClient> _logger;
+
+        private readonly string _apiBaseUrl;
+        private readonly string _apiEndpoint;
+        private readonly string _apiKey;
 
         /// <summary>
         /// Initiates a new instance of the <see cref="ExternalWeatherApiClient" /> class.
         /// </summary>
         /// <param name="httpClientFactory"><see cref="IHttpClientFactory" />.</param>
         /// <param name="options"><see cref="IOptions{ExternalWeatherApiOptions}" />.</param>
-        public ExternalWeatherApiClient(IHttpClientFactory httpClientFactory, IOptions<ExternalWeatherApiOptions> options)
+        public ExternalWeatherApiClient(IHttpClientFactory httpClientFactory, ILogger<ExternalWeatherApiClient> logger, IOptions<ExternalWeatherApiOptions> options)
         {
-            _httpClient = httpClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            ArgumentNullException.ThrowIfNull(nameof(httpClientFactory));
+            ArgumentNullException.ThrowIfNull(nameof(logger));
+            ArgumentNullException.ThrowIfNull(nameof(options));
+
+            _httpClient = httpClientFactory.CreateClient();
+            _logger = logger;
+            _apiBaseUrl = options.Value.ApiBaseUrl;
+            _apiEndpoint = options.Value.ApiEndpoint;
+            _apiKey = options.Value.ApiKey;
         }
 
         /// <summary>
         /// Gets current weather data from external weather api.
         /// </summary>
-        /// <param name="location"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<WeatherData> GetCurrentWeather(string location, CancellationToken cancellationToken)
+        /// <param name="location">Location.</param>
+        /// <param name="cancellationToken"><see cref="CancellationToken" />.</param>
+        /// <returns><see cref="HttpResponseMessage" />.</returns>
+        public async Task<HttpResponseMessage> GetCurrentWeather(string location, CancellationToken cancellationToken)
         {
-            string apiBaseUrl = _options.Value.ApiBaseUrl;
-            string apiEndpoint = _options.Value.ApiEndpoint;
-            string apiKey = _options.Value.ApiKey;
-
-            HttpRequestMessage requestMessage = new HttpRequestMessage
+            HttpResponseMessage? response;
+            try
             {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri($"{apiBaseUrl}/{apiEndpoint}?q={location}&appid={apiKey}")
-        };
+                HttpRequestMessage requestMessage = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri($"{_apiBaseUrl}/{_apiEndpoint}?q={location}&appid={_apiKey}")
+                };
 
-            using (HttpResponseMessage response = await _httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false))
-            {
-                string resultContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JsonConvert.DeserializeObject<WeatherData>(resultContent, new JsonSerializerSettings());
+                // log http request message
+                _logger.LogInformation($"An external weather api endpoint is requested.", requestMessage);
+
+                response = await _httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
+
+                // log http response message
+                _logger.LogInformation("Response recieved.", response);
             }
+            catch (Exception exception)
+            {
+                _logger.LogError("An error occured while requesting to an external weather api endpoint.", exception);
+                response = new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.InternalServerError, ReasonPhrase = exception.Message };
+            }
+
+            return response;
         }
     }
 }

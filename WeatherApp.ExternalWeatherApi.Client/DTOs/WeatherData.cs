@@ -11,7 +11,7 @@ namespace WeatherApp.ExternalWeatherApi.Client.DTOs
         /// Gets or sets City name.
         /// </summary>
         [JsonProperty("name")]
-        public string CityName { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets Weather.
