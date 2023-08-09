@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net;
 using WeatherApp.Api.Controllers;
@@ -12,7 +13,14 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
     [TestClass]
     public class WeatherControllerTests
     {
-        private readonly Mock<ICurrentWeatherHandler> _currentWeatherHandler = new Mock<ICurrentWeatherHandler>();        
+        private readonly Mock<ICurrentWeatherHandler> _currentWeatherHandler;
+        private readonly Mock<ILogger<WeatherController>> _logger;
+
+        public WeatherControllerTests()
+        {
+            _currentWeatherHandler = new Mock<ICurrentWeatherHandler>();
+            _logger = new Mock<ILogger<WeatherController>>();
+        }
 
         [TestMethod]
         public void WeatherController_ThrowNullException_When_HandlerIsNull()
@@ -22,7 +30,18 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Act
 
             // Assert
-            Assert.ThrowsException<ArgumentNullException>(() => new WeatherController(It.IsAny<ICurrentWeatherHandler>()));
+            Assert.ThrowsException<ArgumentNullException>(() => new WeatherController(It.IsAny<ICurrentWeatherHandler>(), _logger.Object));
+        }
+
+        [TestMethod]
+        public void WeatherController_ThrowNullException_When_LoggerIsNull()
+        {
+            // Arrange
+
+            // Act
+
+            // Assert
+            Assert.ThrowsException<ArgumentNullException>(() => new WeatherController(_currentWeatherHandler.Object, It.IsAny<ILogger<WeatherController>>()));
         }
 
         [TestMethod]
@@ -32,7 +51,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
             weatherRequestModel.Object.CityName = It.IsAny<string>();
 
-            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
             controller.ModelState.AddModelError("city", "The CityName field is required.");
 
             // Act
@@ -44,12 +63,23 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == "The CityName field is required." && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
 
         [TestMethod]
         public async Task WeatherController_ReturnsOk_When_City_IsNotNull()
         {
             // Arrange
+            //string logInformationMessage = string.Format("City: {0}, Country Code: {1}, Weather Description: {2}");
+
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
             weatherRequestModel.Object.CityName = "Mumbai";
 
@@ -59,7 +89,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { Data = It.IsAny<CurrentWeather>(), StatusCode = HttpStatusCode.OK});
 
-            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -70,6 +100,22 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            string logInformationMessage = string.Format(
+                "City: {0}, Country Code: {1}, Weather Description: {2}",
+                (((OkObjectResult)result).Value as CurrentWeather)?.City,
+                (((OkObjectResult)result).Value as CurrentWeather)?.CountryCode,
+                (((OkObjectResult)result).Value as CurrentWeather)?.Description
+            );
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == logInformationMessage && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
 
         [TestMethod]
@@ -86,7 +132,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { StatusCode = HttpStatusCode.OK });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -97,6 +143,22 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            string logInformationMessage = string.Format(
+                "City: {0}, Country Code: {1}, Weather Description: {2}",
+                (((OkObjectResult)result).Value as CurrentWeather)?.City,
+                (((OkObjectResult)result).Value as CurrentWeather)?.CountryCode,
+                (((OkObjectResult)result).Value as CurrentWeather)?.Description
+            );
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == logInformationMessage && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
 
         [TestMethod]
@@ -115,7 +177,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { StatusCode = HttpStatusCode.NotFound, Errors = new List<string> { cityNameNotFoundError } });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -130,6 +192,15 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == cityNameNotFoundError && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
 
         [TestMethod]
@@ -148,7 +219,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { StatusCode = HttpStatusCode.Unauthorized, Errors = new List<string> { inValidApiKeyErrorMessage } });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -164,6 +235,15 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == inValidApiKeyErrorMessage && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
 
         [TestMethod]
@@ -194,7 +274,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                         StatusCode = HttpStatusCode.OK 
                     });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -212,6 +292,22 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            string logInformationMessage = string.Format(
+                "City: {0}, Country Code: {1}, Weather Description: {2}",
+                currentWeather?.City,
+                currentWeather?.CountryCode,
+                currentWeather?.Description
+            );
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == logInformationMessage && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
     }
 }

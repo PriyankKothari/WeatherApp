@@ -15,14 +15,17 @@ namespace WeatherApp.Api.Controllers
     public class WeatherController : ControllerBase
     {
         private readonly ICurrentWeatherHandler _currentWeatherHandler;
+        private readonly ILogger<WeatherController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WeatherController" /> class.
         /// </summary>
         /// <param name="currentWeatherHandler"><see cref="CurrentWeatherHandler" />.</param>
-        public WeatherController(ICurrentWeatherHandler currentWeatherHandler)
+        /// <param name="logger"><see cref="ILogger{WeatherController}" />.</param>
+        public WeatherController(ICurrentWeatherHandler currentWeatherHandler, ILogger<WeatherController> logger)
         {
             _currentWeatherHandler = currentWeatherHandler ?? throw new ArgumentNullException(nameof(currentWeatherHandler));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -41,6 +44,7 @@ namespace WeatherApp.Api.Controllers
             {
                 if (!ModelState.IsValid)
                 {
+                    _logger.LogWarning(string.Join("; ", ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage)));
                     return BadRequest(ModelState);
                 }
 
@@ -54,18 +58,22 @@ namespace WeatherApp.Api.Controllers
 
                 if (httpDataResponse.StatusCode == HttpStatusCode.NotFound)
                 {
+                    _logger.LogWarning(string.Join("; ", httpDataResponse.Errors));
                     return NotFound(httpDataResponse.Errors);
                 }
 
                 if (httpDataResponse.StatusCode == HttpStatusCode.Unauthorized)
                 {
+                    _logger.LogWarning(string.Join("; ", httpDataResponse.Errors));
                     return Unauthorized(httpDataResponse.Errors);
                 }
 
-                return Ok(httpDataResponse.Data);
+                _logger.LogInformation($"City: {httpDataResponse?.Data?.City}, Country Code: {httpDataResponse?.Data?.CountryCode}, Weather Description: {httpDataResponse?.Data?.Description}");
+                return Ok(httpDataResponse?.Data);
             }
             catch (Exception exception)
             {
+                _logger.LogError($"{exception.Message} - {exception.StackTrace}");
                 return Problem(exception.Message, exception.StackTrace);
             }
         }

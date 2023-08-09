@@ -11,17 +11,20 @@ namespace WeatherApp.Api.Middlewares
         private const string ApiKeyHeaderName = "X-API-KEY";
 
         private readonly RequestDelegate _nextRequestDelegate;
-        private readonly IConfiguration _configuration;        
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<ApiKeyAuthenticationMiddleware> _logger;
 
         /// <summary>
         /// Initializes an instance of the <see cref="ApiKeyAuthenticationMiddleware" /> class.
         /// </summary>
         /// <param name="nextRequestDelegate">Next <see cref="RequestDelegate" />.</param>
         /// <param name="configuration"><see cref="IConfiguration" />.</param>
-        public ApiKeyAuthenticationMiddleware(RequestDelegate nextRequestDelegate, IConfiguration configuration)
+        /// <param name="logger"><see cref="ILogger{ApiKeyAuthenticationMiddleware}" />.</param>
+        public ApiKeyAuthenticationMiddleware(RequestDelegate nextRequestDelegate, IConfiguration configuration, ILogger<ApiKeyAuthenticationMiddleware> logger)
         {
             _nextRequestDelegate = nextRequestDelegate ?? throw new ArgumentNullException(nameof(nextRequestDelegate));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -35,6 +38,8 @@ namespace WeatherApp.Api.Middlewares
 
             if (!context.Request.Headers.TryGetValue(ApiKeyHeaderName, out var extractedApiKey))
             {
+                _logger.LogCritical("Authentication failed. API KEY is not provided with the request.");
+
                 // set StatusCode from Enum instead of integer value for readability
                 context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 await context.Response.WriteAsync("MISSING API KEY");
@@ -46,6 +51,8 @@ namespace WeatherApp.Api.Middlewares
             // Check each api key with OrdinalIgnoreCase
             if (!apiKeys.Any(apiKey => apiKey.Equals(extractedApiKey, StringComparison.OrdinalIgnoreCase)))
             {
+                _logger.LogCritical("Authentication failed. Valid API KEY is not provided with the request.");
+
                 // set StatusCode from Enum instead of integer value for readability
                 context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 await context.Response.WriteAsync($"INVALID API KEY");

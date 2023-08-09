@@ -10,6 +10,8 @@ using Microsoft.OpenApi.Models;
 
 var webApplicationBuilder = WebApplication.CreateBuilder(args);
 
+webApplicationBuilder.Host.ConfigureLogging(logging => logging.ClearProviders().AddConsole());
+
 // Build Services
 // Read configuration section "ExternalWeatherApiSettings" into IOptions<ExternalWeatherApiOptions>
 webApplicationBuilder.Services.Configure<ExternalWeatherApiOptions>(webApplicationBuilder.Configuration.GetSection("ExternalWeatherApiSettings"));

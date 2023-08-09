@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net;
 using System.Text;
@@ -10,6 +11,13 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
     [TestClass]
     public class ApiKeyAuthenticationMiddlewareTests
     {
+        private readonly Mock<ILogger<ApiKeyAuthenticationMiddleware>> _logger;
+
+        public ApiKeyAuthenticationMiddlewareTests()
+        {
+            _logger = new Mock<ILogger<ApiKeyAuthenticationMiddleware>>();
+        }
+
         [TestMethod]
         public void ApiKeyAuthenticationMiddleware_ThrowArgumentNullException_When_RequestDelegateIsNull()
         {
@@ -18,7 +26,12 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Act
 
             // Assert
-            Assert.ThrowsException<ArgumentNullException>(() => new ApiKeyAuthenticationMiddleware(It.IsAny<RequestDelegate>(), new ConfigurationBuilder().Build()));
+            Assert.ThrowsException<ArgumentNullException>(() =>
+                new ApiKeyAuthenticationMiddleware(
+                    It.IsAny<RequestDelegate>(),
+                    new ConfigurationBuilder().Build(),
+                    _logger.Object)
+                );
         }
 
         [TestMethod]
@@ -29,7 +42,28 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Act
 
             // Assert
-            Assert.ThrowsException<ArgumentNullException>(() => new ApiKeyAuthenticationMiddleware((nextRequestDelegate) => { return Task.CompletedTask; }, It.IsAny<IConfiguration>()));
+            Assert.ThrowsException<ArgumentNullException>(() =>
+                new ApiKeyAuthenticationMiddleware(
+                    (nextRequestDelegate) => { return Task.CompletedTask; },
+                    It.IsAny<IConfiguration>(),
+                    _logger.Object)
+                );
+        }
+
+        [TestMethod]
+        public void ApiKeyAuthenticationMiddleware_ThrowArgumentNullException_When_LoggerIsNull()
+        {
+            // Arrange
+
+            // Act
+
+            // Assert
+            Assert.ThrowsException<ArgumentNullException>(() =>
+                new ApiKeyAuthenticationMiddleware(
+                    (nextRequestDelegate) => { return Task.CompletedTask; },
+                    new ConfigurationBuilder().Build(),
+                    It.IsAny<ILogger<ApiKeyAuthenticationMiddleware>>())
+                );
         }
 
         [TestMethod]
@@ -37,12 +71,20 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         {
             // Arrange
             ApiKeyAuthenticationMiddleware middlewareInstance =
-                new ApiKeyAuthenticationMiddleware((nextRequestDelegate) => { return Task.CompletedTask; }, new ConfigurationBuilder().Build());
+                new ApiKeyAuthenticationMiddleware(
+                    (nextRequestDelegate) => { return Task.CompletedTask; },
+                    new ConfigurationBuilder().Build(),
+                    _logger.Object
+                );
 
             // Act
 
             // Assert
-            _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(async () => await middlewareInstance.Invoke(null).ConfigureAwait(false));
+            await
+                Assert.ThrowsExceptionAsync<ArgumentNullException>(
+                    async () =>
+                        await middlewareInstance.Invoke(null).ConfigureAwait(false))
+                .ConfigureAwait(false);
         }
 
         [TestMethod]
@@ -50,12 +92,17 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         {
             // Arrange
             const string missingApiKeyOutput = "MISSING API KEY";
+            const string missingApiKeyLogMessage = "Authentication failed. API KEY is not provided with the request.";
 
             HttpContext httpContext = new DefaultHttpContext();
             httpContext.Response.Body = new MemoryStream();
 
             ApiKeyAuthenticationMiddleware middlewareInstance =
-                new ApiKeyAuthenticationMiddleware((nextRequestDelegate) => { return Task.CompletedTask; }, new ConfigurationBuilder().Build());
+                new ApiKeyAuthenticationMiddleware(
+                    (nextRequestDelegate) => { return Task.CompletedTask; },
+                    new ConfigurationBuilder().Build(),
+                    _logger.Object
+                );
 
             // Act
             await middlewareInstance.Invoke(httpContext).ConfigureAwait(false);
@@ -63,9 +110,17 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Assert
             Assert.AreEqual((int)HttpStatusCode.Unauthorized, httpContext.Response.StatusCode);
 
-            // Assert 1: if the next delegate was invoked
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
             Assert.AreEqual(missingApiKeyOutput, new StreamReader(httpContext.Response.Body).ReadToEnd());
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Critical),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == missingApiKeyLogMessage && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
 
         [TestMethod]
@@ -73,6 +128,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         {
             // Arrange
             const string missingApiKeyOutput = "INVALID API KEY";
+            const string missingApiKeyLogMessage = "Authentication failed. Valid API KEY is not provided with the request.";
 
             HttpContext httpContext = new DefaultHttpContext();
             httpContext.Request.Headers.Add("X-API-KEY", "X-API-KEY");
@@ -86,7 +142,12 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                 .AddJsonStream(new MemoryStream(Encoding.UTF8.GetBytes(appSettings)))
                 .Build();
 
-            ApiKeyAuthenticationMiddleware middlewareInstance = new((nextRequestDelegate) => { return Task.CompletedTask; }, configuration);
+            ApiKeyAuthenticationMiddleware middlewareInstance =
+                new ApiKeyAuthenticationMiddleware(
+                    (nextRequestDelegate) => { return Task.CompletedTask; },
+                    configuration,
+                    _logger.Object
+                );
 
             // Act
             await middlewareInstance.Invoke(httpContext).ConfigureAwait(false);
@@ -94,9 +155,17 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Assert
             Assert.AreEqual((int)HttpStatusCode.Unauthorized, httpContext.Response.StatusCode);
 
-            // Assert 1: if the next delegate was invoked
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
             Assert.AreEqual(missingApiKeyOutput, new StreamReader(httpContext.Response.Body).ReadToEnd());
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Critical),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == missingApiKeyLogMessage && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
         }
 
         [TestMethod]
@@ -115,7 +184,12 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                 .AddJsonStream(new MemoryStream(Encoding.UTF8.GetBytes(appSettings)))
                 .Build();
 
-            ApiKeyAuthenticationMiddleware middlewareInstance = new((nextRequestDelegate) => { return Task.CompletedTask; }, configuration);
+            ApiKeyAuthenticationMiddleware middlewareInstance =
+                new ApiKeyAuthenticationMiddleware(
+                    (nextRequestDelegate) => { return Task.CompletedTask; },
+                    configuration,
+                    _logger.Object
+                );
 
             // Act
             await middlewareInstance.Invoke(httpContext).ConfigureAwait(false);
