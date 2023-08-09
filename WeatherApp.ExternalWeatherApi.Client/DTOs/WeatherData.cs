@@ -11,7 +11,19 @@ namespace WeatherApp.ExternalWeatherApi.Client.DTOs
         /// Gets or sets City name.
         /// </summary>
         [JsonProperty("name")]
-        public string City { get; set; } = string.Empty;
+        public string? City { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets Error message.
+        /// </summary>
+        [JsonProperty("message")]
+        public string? ErrorMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets Country code.
+        /// </summary>
+        [JsonProperty("sys")]
+        public System? System { get; set;}
 
         /// <summary>
         /// Gets or sets Weather.
@@ -30,5 +42,17 @@ namespace WeatherApp.ExternalWeatherApi.Client.DTOs
         /// </summary>
         [JsonProperty("description")]
         public string Description { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// System.
+    /// </summary>
+    public sealed class System
+    {
+        /// <summary>
+        /// Gets or sets Country code.
+        /// </summary>
+        [JsonProperty("country")]
+        public string CountryCode { get; set;} = string.Empty;
     }
 }

@@ -43,23 +43,19 @@ namespace WeatherApp.Infrastructure.Services
                 HttpResponseMessage responseMessage =
                     await _externalWeatherApiHttpClient.GetCurrentWeather(location, cancellationToken).ConfigureAwait(false);
 
-                if (responseMessage.IsSuccessStatusCode)
+                string weatherDataJson = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                if (!string.IsNullOrEmpty(weatherDataJson))
                 {
-                    string weatherDataJson = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                    WeatherData? weatherData = JsonConvert.DeserializeObject<WeatherData>(weatherDataJson);
 
-                    if (!string.IsNullOrEmpty(weatherDataJson))
+                    httpDataResponse.Data = new CurrentWeather
                     {
-                        WeatherData? weatherData = JsonConvert.DeserializeObject<WeatherData>(weatherDataJson);
-
-                        if (weatherData is not null)
-                        {
-                            httpDataResponse.Data = new CurrentWeather
-                            {
-                                City = weatherData.City,
-                                Description = weatherData.WeatherList.ToArray()[0].Description
-                            };
-                        }
-                    }
+                        City = weatherData?.City ?? string.Empty,
+                        CountryCode = weatherData?.System?.CountryCode ?? string.Empty,
+                        Description = weatherData?.WeatherList?.FirstOrDefault()?.Description ?? string.Empty,
+                    };
+                    httpDataResponse.Errors = new List<string> { weatherData?.ErrorMessage ?? string.Empty };
                 }
                 else
                 {
