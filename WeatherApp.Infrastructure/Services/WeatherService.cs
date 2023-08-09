@@ -36,6 +36,8 @@ namespace WeatherApp.Infrastructure.Services
         /// <returns>A <see cref="HttpDataResponse{CurrentWeather}" />.</returns>
         public async Task<HttpDataResponse<CurrentWeather>> GetCurrentWeather(string location, CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(location, nameof(location));
+
             HttpDataResponse<CurrentWeather>? httpDataResponse = new HttpDataResponse<CurrentWeather>();
 
             try

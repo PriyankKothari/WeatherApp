@@ -41,7 +41,7 @@ namespace WeatherApp.ExternalWeatherApi.Client.DTOs
         /// Gets or sets description.
         /// </summary>
         [JsonProperty("description")]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -53,6 +53,6 @@ namespace WeatherApp.ExternalWeatherApi.Client.DTOs
         /// Gets or sets Country code.
         /// </summary>
         [JsonProperty("country")]
-        public string CountryCode { get; set;} = string.Empty;
+        public string? CountryCode { get; set;} = string.Empty;
     }
 }
