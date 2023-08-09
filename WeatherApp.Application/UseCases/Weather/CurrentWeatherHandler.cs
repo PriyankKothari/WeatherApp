@@ -30,7 +30,7 @@ namespace WeatherApp.Application.UseCases.Weather
         /// <returns>A <see cref="CurrentWeather" />.</returns>
         public async Task<HttpDataResponse<CurrentWeather>> HandleAsync(CurrentWeatherRequest request, CancellationToken cancellationToken)
         {
-            ArgumentNullException.ThrowIfNull(nameof(request));
+            ArgumentNullException.ThrowIfNull(request, nameof(request));
 
             HttpDataResponse<CurrentWeather>? httpDataResponse = null;
 

@@ -31,7 +31,7 @@ namespace WeatherApp.Api.Middlewares
         /// <returns><see cref="HttpStatusCode.Unauthorized" /> if the ApiKey is missing or invalid. Otherwise, continue to the next <see cref="RequestDelegate" />.</returns>
         public async Task Invoke(HttpContext context)
         {
-            ArgumentNullException.ThrowIfNull(nameof(context));
+            ArgumentNullException.ThrowIfNull(context, nameof(context));
 
             if (!context.Request.Headers.TryGetValue(ApiKeyHeaderName, out var extractedApiKey))
             {

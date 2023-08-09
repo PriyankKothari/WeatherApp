@@ -23,9 +23,9 @@ namespace WeatherApp.ExternalWeatherApi.Client.ApiClients
         /// <param name="options"><see cref="IOptions{ExternalWeatherApiOptions}" />.</param>
         public ExternalWeatherApiClient(IHttpClientFactory httpClientFactory, ILogger<ExternalWeatherApiClient> logger, IOptions<ExternalWeatherApiOptions> options)
         {
-            ArgumentNullException.ThrowIfNull(nameof(httpClientFactory));
-            ArgumentNullException.ThrowIfNull(nameof(logger));
-            ArgumentNullException.ThrowIfNull(nameof(options));
+            ArgumentNullException.ThrowIfNull(httpClientFactory, nameof(httpClientFactory));
+            ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+            ArgumentNullException.ThrowIfNull(options, nameof(options));
 
             _httpClient = httpClientFactory.CreateClient();
             _logger = logger;

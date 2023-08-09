@@ -11,7 +11,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
     public class ApiKeyAuthenticationMiddlewareTests
     {
         [TestMethod]
-        public void ApiKeyAuthenticationMiddleware_ThrowNullException_When_RequestDelegateIsNull()
+        public void ApiKeyAuthenticationMiddleware_ThrowArgumentNullException_When_RequestDelegateIsNull()
         {
             // Arrange
 
@@ -22,7 +22,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         }
 
         [TestMethod]
-        public void ApiKeyAuthenticationMiddleware_ThrowNullException_When_ConfigurationIsNull()
+        public void ApiKeyAuthenticationMiddleware_ThrowArgumentNullException_When_ConfigurationIsNull()
         {
             // Arrange
 
@@ -33,7 +33,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         }
 
         [TestMethod]
-        public async Task ApiKeyAuthenticationMiddleware_ThrowNullReferenceException_When_CurrentHttpContext_IsNull()
+        public async Task ApiKeyAuthenticationMiddleware_ThrowArgumentNullReferenceException_When_CurrentHttpContext_IsNull()
         {
             // Arrange
             ApiKeyAuthenticationMiddleware middlewareInstance =
@@ -42,7 +42,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Act
 
             // Assert
-            _ = await Assert.ThrowsExceptionAsync<NullReferenceException>(async () => await middlewareInstance.Invoke(null).ConfigureAwait(false));
+            _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(async () => await middlewareInstance.Invoke(null).ConfigureAwait(false));
         }
 
         [TestMethod]
