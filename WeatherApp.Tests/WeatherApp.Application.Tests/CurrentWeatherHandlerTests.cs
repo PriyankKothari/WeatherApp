@@ -50,6 +50,7 @@ namespace WeatherApp.Tests.WeatherApp.Application.Tests
             // Arrange
 
             // Act
+            _currentWeatherHandler = new CurrentWeatherHandler(_weatherService.Object, _logger.Object);
 
             // Assert
             await
@@ -77,6 +78,8 @@ namespace WeatherApp.Tests.WeatherApp.Application.Tests
 
             // Assert
             Assert.IsInstanceOfType(response, typeof(HttpDataResponse<CurrentWeather>));
+
+            _weatherService.Verify(service => service.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -112,6 +115,8 @@ namespace WeatherApp.Tests.WeatherApp.Application.Tests
             // Assert
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             Assert.IsNotNull(response.Data);
+
+            _weatherService.Verify(service => service.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -138,6 +143,8 @@ namespace WeatherApp.Tests.WeatherApp.Application.Tests
             // Assert
             Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
             Assert.IsTrue(response.Errors?.Any());
+
+            _weatherService.Verify(service => service.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

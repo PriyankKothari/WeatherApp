@@ -61,6 +61,9 @@ namespace WeatherApp.Tests.WeatherApp.Infrastructure.Tests
                     await
                         _weatherService.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()).ConfigureAwait(false))
                 .ConfigureAwait(false);
+
+            _externalWeatherApiHttpClient
+                .Verify(httpClient => httpClient.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [TestMethod]
@@ -82,6 +85,9 @@ namespace WeatherApp.Tests.WeatherApp.Infrastructure.Tests
 
             // Assert
             Assert.IsInstanceOfType(response, typeof(HttpDataResponse<CurrentWeather>));
+            
+            _externalWeatherApiHttpClient
+                .Verify(httpClient => httpClient.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -126,6 +132,9 @@ namespace WeatherApp.Tests.WeatherApp.Infrastructure.Tests
             // Assert
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             Assert.IsNotNull(response.Data);
+
+            _externalWeatherApiHttpClient
+                .Verify(httpClient => httpClient.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -160,6 +169,9 @@ namespace WeatherApp.Tests.WeatherApp.Infrastructure.Tests
             // Assert
             Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
             Assert.IsTrue(response.Errors?.Any());
+
+            _externalWeatherApiHttpClient
+                .Verify(httpClient => httpClient.GetCurrentWeather(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

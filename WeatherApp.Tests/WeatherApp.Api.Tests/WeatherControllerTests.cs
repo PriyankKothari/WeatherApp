@@ -12,7 +12,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
     [TestClass]
     public class WeatherControllerTests
     {
-        private readonly Mock<ICurrentWeatherHandler> _currentWeatherHandlerMock = new Mock<ICurrentWeatherHandler>();        
+        private readonly Mock<ICurrentWeatherHandler> _currentWeatherHandler = new Mock<ICurrentWeatherHandler>();        
 
         [TestMethod]
         public void WeatherController_ThrowNullException_When_HandlerIsNull()
@@ -32,7 +32,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
             weatherRequestModel.Object.CityName = It.IsAny<string>();
 
-            WeatherController controller = new WeatherController(_currentWeatherHandlerMock.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
             controller.ModelState.AddModelError("city", "The CityName field is required.");
 
             // Act
@@ -41,6 +41,9 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Assert
             Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
             Assert.AreEqual((int)HttpStatusCode.BadRequest, ((BadRequestObjectResult)result).StatusCode);
+
+            _currentWeatherHandler
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [TestMethod]
@@ -50,13 +53,13 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
             weatherRequestModel.Object.CityName = "Mumbai";
 
-            _currentWeatherHandlerMock
+            _currentWeatherHandler
                 .Setup(
                     currentWeatherHandler => currentWeatherHandler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { Data = It.IsAny<CurrentWeather>(), StatusCode = HttpStatusCode.OK});
 
-            WeatherController controller = new WeatherController(_currentWeatherHandlerMock.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -64,6 +67,9 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Assert
             Assert.IsInstanceOfType(result, typeof(OkObjectResult));
             Assert.AreEqual((int)HttpStatusCode.OK, ((OkObjectResult)result).StatusCode);
+
+            _currentWeatherHandler
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -74,13 +80,13 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             weatherRequestModel.Object.CityName = "Mumbai";
             weatherRequestModel.Object.CountryName = It.IsAny<string>();
 
-            _currentWeatherHandlerMock
+            _currentWeatherHandler
                 .Setup(
                     currentWeatherHandler => currentWeatherHandler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { StatusCode = HttpStatusCode.OK });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandlerMock.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -88,6 +94,9 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             // Assert
             Assert.IsInstanceOfType(result, typeof(OkObjectResult));
             Assert.AreEqual((int)HttpStatusCode.OK, ((OkObjectResult)result).StatusCode);
+
+            _currentWeatherHandler
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -100,13 +109,13 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             weatherRequestModel.Object.CityName = "Mum";
             weatherRequestModel.Object.CountryName = It.IsAny<string>();
 
-            _currentWeatherHandlerMock
+            _currentWeatherHandler
                 .Setup(
                     currentWeatherHandler => currentWeatherHandler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { StatusCode = HttpStatusCode.NotFound, Errors = new List<string> { cityNameNotFoundError } });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandlerMock.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -118,6 +127,9 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
             Assert.AreEqual(cityNameNotFoundError, (actual.Value as List<string>)?[0]);
+
+            _currentWeatherHandler
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -130,13 +142,13 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             weatherRequestModel.Object.CityName = "Auckland";
             weatherRequestModel.Object.CountryName = "NZ";
 
-            _currentWeatherHandlerMock
+            _currentWeatherHandler
                 .Setup(
                     currentWeatherHandler => currentWeatherHandler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(
                     () => new HttpDataResponse<CurrentWeather> { StatusCode = HttpStatusCode.Unauthorized, Errors = new List<string> { inValidApiKeyErrorMessage } });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandlerMock.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -149,6 +161,9 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
 
             string? errorMessage = (actual?.Value as List<string>)?[0];
             Assert.IsTrue(errorMessage?.Contains(inValidApiKeyErrorMessage));
+
+            _currentWeatherHandler
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -164,7 +179,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             weatherRequestModel.Object.CityName = city;
             weatherRequestModel.Object.CountryName = country;
 
-            _currentWeatherHandlerMock
+            _currentWeatherHandler
                 .Setup(
                     currentWeatherHandler => currentWeatherHandler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(
@@ -179,7 +194,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                         StatusCode = HttpStatusCode.OK 
                     });
 
-            WeatherController controller = new WeatherController(_currentWeatherHandlerMock.Object);
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object);
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -194,6 +209,9 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             Assert.AreEqual(city, currentWeather?.City);
             Assert.AreEqual(code, currentWeather?.CountryCode);
             Assert.AreEqual(desc, currentWeather?.Description);
+
+            _currentWeatherHandler
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
