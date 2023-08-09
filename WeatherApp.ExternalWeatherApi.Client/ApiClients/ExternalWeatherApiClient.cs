@@ -42,19 +42,17 @@ namespace WeatherApp.ExternalWeatherApi.Client.ApiClients
         /// <returns><see cref="HttpResponseMessage" />.</returns>
         public async Task<HttpResponseMessage> GetCurrentWeather(string location, CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(location, nameof(location));
+
             HttpResponseMessage? response;
             try
             {
-                HttpRequestMessage requestMessage = new HttpRequestMessage
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri($"{_apiBaseUrl}/{_apiEndpoint}?q={location}&appid={_apiKey}")
-                };
+                Uri requestUri = new Uri($"{_apiBaseUrl}/{_apiEndpoint}?q={location}&appid={_apiKey}");
 
                 // log http request message
-                _logger.LogInformation($"An external weather api endpoint is requested.", requestMessage);
+                _logger.LogInformation($"An external weather api endpoint is requested.", requestUri);
 
-                response = await _httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
+                response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
 
                 // log http response message
                 _logger.LogInformation("Response recieved.", response);

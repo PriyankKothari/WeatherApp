@@ -102,10 +102,6 @@ namespace WeatherApp.Tests.WeatherApp.Infrastructure.Tests
             var content = new WeatherData
             {
                 City = city,
-                System = new ExternalWeatherApi.Client.DTOs.System
-                {
-                        CountryCode = code
-                },
                 WeatherList = new List<Weather> 
                 {
                     new Weather
