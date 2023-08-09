@@ -29,37 +29,40 @@ namespace WeatherApp.Api.Controllers
         /// Gets current weather.
         /// </summary>
         /// <param name="weatherRequestModel"><see cref="WeatherRequestModel" />.</param>
+        /// <param name="cancellationToken"><see cref="CancellationToken" />.</param>
         /// <returns>An <see cref="IActionResult" /> containing current weather data.</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(500)]
         [HttpGet]
         [Route("current")]
-        public async Task<IActionResult> Index([FromQuery] WeatherRequestModel weatherRequestModel)
+        public async Task<IActionResult> Index([FromQuery] WeatherRequestModel weatherRequestModel, CancellationToken cancellationToken)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
                 CurrentWeatherRequest request = new()
                 {
                     CityName = weatherRequestModel.CityName,
                     CountryName = weatherRequestModel.CountryName ?? string.Empty
                 };
-                
-                var httpDataResponse =
-                    await _currentWeatherHandler.HandleAsync(request, CancellationToken.None).ConfigureAwait(false);
 
-                switch (httpDataResponse.StatusCode)
+                var httpDataResponse = await _currentWeatherHandler.HandleAsync(request, cancellationToken).ConfigureAwait(false);
+
+                if (httpDataResponse.StatusCode == HttpStatusCode.NotFound)
                 {
-                    case HttpStatusCode.OK:
-                        return Ok(httpDataResponse.Data);
-                    case HttpStatusCode.BadRequest:
-                        return BadRequest("Invalid parameters or parameters not provided");
-                    case HttpStatusCode.NotFound:
-                        return NotFound("City or Country not found");
-                    case HttpStatusCode.Unauthorized:
-                        return Unauthorized("Invalid API-KEY for External Weather API Endpoint");
-                    default:
-                        return Problem("Something went wrong while getting current weather information");
+                    return NotFound(httpDataResponse.Errors);
                 }
+
+                if (httpDataResponse.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    return Unauthorized(httpDataResponse.Errors);
+                }
+
+                return Ok(httpDataResponse.Data);
             }
             catch (Exception exception)
             {

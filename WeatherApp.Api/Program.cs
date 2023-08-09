@@ -44,7 +44,7 @@ webApplicationBuilder.Services.AddCors(policy =>
 webApplicationBuilder.Services.AddHttpClient();
 
 // Controllers
-webApplicationBuilder.Services.AddControllersWithViews();
+webApplicationBuilder.Services.AddControllersWithViews().ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true);
 
 // API Versioning
 webApplicationBuilder.Services.AddApiVersioning(options =>
