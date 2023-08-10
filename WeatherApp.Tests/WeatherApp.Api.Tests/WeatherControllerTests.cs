@@ -49,10 +49,10 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         {
             // Arrange
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
-            weatherRequestModel.Object.CityName = It.IsAny<string>();
+            weatherRequestModel.Object.City = It.IsAny<string>();
 
             WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
-            controller.ModelState.AddModelError("city", "The CityName field is required.");
+            controller.ModelState.AddModelError("city", "The City field is required.");
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -68,7 +68,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
                 logger => logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == "The CityName field is required." && @type.Name == "FormattedLogValues"),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == "The City field is required." && @type.Name == "FormattedLogValues"),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Once);
@@ -81,7 +81,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             //string logInformationMessage = string.Format("City: {0}, Country Code: {1}, Weather Description: {2}");
 
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
-            weatherRequestModel.Object.CityName = "Mumbai";
+            weatherRequestModel.Object.City = "Mumbai";
 
             _currentWeatherHandler
                 .Setup(
@@ -123,8 +123,8 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         {
             // Arrange
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
-            weatherRequestModel.Object.CityName = "Mumbai";
-            weatherRequestModel.Object.CountryName = It.IsAny<string>();
+            weatherRequestModel.Object.City = "Mumbai";
+            weatherRequestModel.Object.Country = It.IsAny<string>();
 
             _currentWeatherHandler
                 .Setup(
@@ -168,8 +168,8 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             const string cityNameNotFoundError = "City Not Found";
 
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
-            weatherRequestModel.Object.CityName = "Mum";
-            weatherRequestModel.Object.CountryName = It.IsAny<string>();
+            weatherRequestModel.Object.City = "Mum";
+            weatherRequestModel.Object.Country = It.IsAny<string>();
 
             _currentWeatherHandler
                 .Setup(
@@ -210,8 +210,8 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             const string inValidApiKeyErrorMessage = "Invalid API key";
 
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
-            weatherRequestModel.Object.CityName = "Auckland";
-            weatherRequestModel.Object.CountryName = "NZ";
+            weatherRequestModel.Object.City = "Auckland";
+            weatherRequestModel.Object.Country = "NZ";
 
             _currentWeatherHandler
                 .Setup(
@@ -256,8 +256,8 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         {
             // Arrange
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
-            weatherRequestModel.Object.CityName = city;
-            weatherRequestModel.Object.CountryName = country;
+            weatherRequestModel.Object.City = city;
+            weatherRequestModel.Object.Country = country;
 
             _currentWeatherHandler
                 .Setup(
