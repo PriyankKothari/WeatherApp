@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace WeatherApp.Api.Models
 {
@@ -9,16 +8,14 @@ namespace WeatherApp.Api.Models
     public class WeatherRequestModel
     {
         /// <summary>
-        /// Gets or sets City name.
+        /// Gets or sets City.
         /// </summary>
-        [FromQuery(Name = "city")]
         [Required]
-        public string CityName { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets Country name.
+        /// Gets or sets Country.
         /// </summary>
-        [FromQuery(Name = "country")]
-        public string? CountryName { get; set; }
+        public string? Country { get; set; }
     }
 }

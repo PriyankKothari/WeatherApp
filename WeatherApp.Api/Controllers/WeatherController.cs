@@ -50,8 +50,8 @@ namespace WeatherApp.Api.Controllers
 
                 CurrentWeatherRequest request = new()
                 {
-                    CityName = weatherRequestModel.CityName,
-                    CountryName = weatherRequestModel.CountryName ?? string.Empty
+                    CityName = weatherRequestModel.City,
+                    CountryName = weatherRequestModel.Country ?? string.Empty
                 };
 
                 var httpDataResponse = await _currentWeatherHandler.HandleAsync(request, cancellationToken).ConfigureAwait(false);
