@@ -1,4 +1,7 @@
-﻿namespace WeatherApp.Domain.DomainModels
+﻿using System.ComponentModel.DataAnnotations;
+using System.Globalization;
+
+namespace WeatherApp.Domain.DomainModels
 {
     /// <summary>
     /// Query object to get current weather.
@@ -17,7 +20,11 @@
 
         public override string ToString()
         {
-            return !string.IsNullOrWhiteSpace(CountryName) ? $"{CityName}, {CountryName}" : CityName;
+            IEnumerable<RegionInfo> regions =
+                CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
+            var countryCode =
+                regions.FirstOrDefault(region => region.EnglishName.Equals(CountryName, StringComparison.OrdinalIgnoreCase));
+            return !string.IsNullOrWhiteSpace(CountryName) ? $"{CityName}, {countryCode}" : CityName;
         }
     }
 }

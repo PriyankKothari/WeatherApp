@@ -7,14 +7,19 @@
 ];
 
 export async function getCurrentWeather(cityname, countryname) {
-    let errorMessage = null;
+    let errorMessage = "";
 
     let url = `v1.0/weather/current?city=` + (cityname || "") + '&country=' + (countryname || "");
     let apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
     let response = await fetch(url, { method: 'GET', headers: { 'x-api-key': apiKey } });
 
     if (response.status === 400) {
-        errorMessage = "City Name is required.";
+        if (cityname === undefined || countryname === undefined) {
+            errorMessage = "City Name and/or Country Name is required.";
+        }
+        else {
+            errorMessage = "Country Name is invalid.";
+        }
     }
 
     if (response.status === 401) {
@@ -29,5 +34,5 @@ export async function getCurrentWeather(cityname, countryname) {
         errorMessage = "Too many requests. Please try again with a different API KEY or try again later.";
     }
 
-    return await response.status === 200 ? response.json() : { status: response.status, error: errorMessage || response.statusText, data: response.json() }
+    return await response.status === 200 ? response.json() : { status: response.status, error: response.statusText + ": " + errorMessage, data: response.json() }
 }
