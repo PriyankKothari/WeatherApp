@@ -12,7 +12,7 @@ namespace WeatherApp.Api.Controllers
     [ApiController]
     [Route("v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
-    public class WeatherController : ControllerBase
+    public sealed class WeatherController : ControllerBase
     {
         private readonly ICurrentWeatherHandler _currentWeatherHandler;
         private readonly ILogger<WeatherController> _logger;

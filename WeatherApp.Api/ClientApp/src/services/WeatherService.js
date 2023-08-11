@@ -15,7 +15,7 @@ export async function getCurrentWeather(cityname, countryname) {
 
     if (response.status === 400) {
         if (cityname === undefined || countryname === undefined) {
-            errorMessage = "City Name and/or Country Name is required.";
+            errorMessage = "City Name and Country Name is required.";
         }
         else {
             errorMessage = "Country Name is invalid.";

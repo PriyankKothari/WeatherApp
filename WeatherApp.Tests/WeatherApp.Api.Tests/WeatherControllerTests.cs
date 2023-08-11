@@ -52,7 +52,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             weatherRequestModel.Object.City = It.IsAny<string>();
 
             WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
-            controller.ModelState.AddModelError("city", "The City field is required.");
+            controller.ModelState.AddModelError("City", "The City field is required.");
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
@@ -75,62 +75,81 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         }
 
         [TestMethod]
-        public async Task WeatherController_ReturnsOk_When_City_IsNotNull()
+        public async Task WeatherController_ReturnsBadRequest_When_Country_IsNull()
         {
             // Arrange
-            //string logInformationMessage = string.Format("City: {0}, Country Code: {1}, Weather Description: {2}");
-
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
-            weatherRequestModel.Object.City = "Mumbai";
-
-            _currentWeatherHandler
-                .Setup(
-                    currentWeatherHandler => currentWeatherHandler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(
-                    () => new HttpDataResponse<CurrentWeather> { Data = It.IsAny<CurrentWeather>(), StatusCode = HttpStatusCode.OK});
+            weatherRequestModel.Object.Country = It.IsAny<string>();
 
             WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
+            controller.ModelState.AddModelError("Country", "The Country field is required.");
 
             // Act
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(OkObjectResult));
-            Assert.AreEqual((int)HttpStatusCode.OK, ((OkObjectResult)result).StatusCode);
+            Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((BadRequestObjectResult)result).StatusCode);
 
             _currentWeatherHandler
-                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
-
-            string logInformationMessage = string.Format(
-                "City: {0}, Country Code: {1}, Weather Description: {2}",
-                (((OkObjectResult)result).Value as CurrentWeather)?.City,
-                (((OkObjectResult)result).Value as CurrentWeather)?.CountryCode,
-                (((OkObjectResult)result).Value as CurrentWeather)?.Description
-            );
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Never);
 
             _logger.Verify(
                 logger => logger.Log(
-                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == logInformationMessage && @type.Name == "FormattedLogValues"),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == "The Country field is required." && @type.Name == "FormattedLogValues"),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Once);
         }
 
         [TestMethod]
-        public async Task WeatherController_ReturnsOk_When_Country_IsNull()
+        public async Task WeatherController_ReturnsBadRequest_When_Country_IsInvalid()
         {
             // Arrange
             Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
+            weatherRequestModel.Object.Country = "Mumbai";
+            weatherRequestModel.Object.Country = "Ind";
+
+            WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
+            controller.ModelState.AddModelError("Country", "Country name is invalid.");
+
+            // Act
+            IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
+
+            // Assert
+            Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((BadRequestObjectResult)result).StatusCode);
+
+            _currentWeatherHandler
+                .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+
+            _logger.Verify(
+                logger => logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString() == "Country name is invalid." && @type.Name == "FormattedLogValues"),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task WeatherController_ReturnsOk_When_CityAndCountry_AreNotNull()
+        {
+            // Arrange
+            //string logInformationMessage = string.Format("City: {0}, Country Code: {1}, Weather Description: {2}");
+
+            Mock<WeatherRequestModel> weatherRequestModel = new Mock<WeatherRequestModel>();
             weatherRequestModel.Object.City = "Mumbai";
-            weatherRequestModel.Object.Country = It.IsAny<string>();
+            weatherRequestModel.Object.Country = "India";
 
             _currentWeatherHandler
                 .Setup(
                     currentWeatherHandler => currentWeatherHandler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(
-                    () => new HttpDataResponse<CurrentWeather> { StatusCode = HttpStatusCode.OK });
+                    () => new HttpDataResponse<CurrentWeather> { Data = It.IsAny<CurrentWeather>(), StatusCode = HttpStatusCode.OK});
 
             WeatherController controller = new WeatherController(_currentWeatherHandler.Object, _logger.Object);
 
