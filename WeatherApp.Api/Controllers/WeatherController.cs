@@ -3,7 +3,7 @@ using System.Net;
 using WeatherApp.Api.Models;
 using WeatherApp.Application.UseCases.Weather;
 using WeatherApp.Domain.DomainModels;
-
+using WeatherApp.Domain.HttpResponseModels;
 
 namespace WeatherApp.Api.Controllers
 {
