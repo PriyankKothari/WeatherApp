@@ -91,7 +91,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         public async Task ApiKeyAuthenticationMiddleware_ReturnsUnauthorized_WhenApiKey_IsNull()
         {
             // Arrange
-            const string missingApiKeyOutput = "MISSING API KEY";
+            const string missingApiKeyOutput = "\"MISSING API KEY\"";
             const string missingApiKeyLogMessage = "Authentication failed. API KEY is not provided with the request.";
 
             HttpContext httpContext = new DefaultHttpContext();
@@ -127,7 +127,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
         public async Task ApiKeyAuthenticationMiddleware_ReturnsUnauthorized_WhenApiKey_IsInvalid()
         {
             // Arrange
-            const string missingApiKeyOutput = "INVALID API KEY";
+            const string missingApiKeyOutput = "\"INVALID API KEY\"";
             const string missingApiKeyLogMessage = "Authentication failed. Valid API KEY is not provided with the request.";
 
             HttpContext httpContext = new DefaultHttpContext();

@@ -14,12 +14,12 @@ namespace WeatherApp.Api.Attributes
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
             IEnumerable<RegionInfo> regions =
-                CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
+                        CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
 
             return
                 regions.Any(region => region.EnglishName.Equals(value?.ToString(), StringComparison.OrdinalIgnoreCase))
                 ? ValidationResult.Success
-                : new ValidationResult(FormatErrorMessage(validationContext.DisplayName));
+                : value is null ? ValidationResult.Success : new ValidationResult(FormatErrorMessage(validationContext.DisplayName));
         }
     }
 }

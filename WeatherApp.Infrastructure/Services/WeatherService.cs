@@ -42,29 +42,30 @@ namespace WeatherApp.Infrastructure.Services
 
             try
             {
-                HttpResponseMessage responseMessage =
-                    await _externalWeatherApiHttpClient.GetCurrentWeather(location, cancellationToken).ConfigureAwait(false);
-
-                string weatherDataJson = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-
-                if (!string.IsNullOrEmpty(weatherDataJson))
+                using (HttpResponseMessage responseMessage = await _externalWeatherApiHttpClient.GetCurrentWeather(location, cancellationToken).ConfigureAwait(false))
                 {
-                    WeatherData? weatherData = JsonConvert.DeserializeObject<WeatherData>(weatherDataJson);
 
-                    httpDataResponse.Data = new CurrentWeather
+                    string weatherDataJson = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                    if (!string.IsNullOrEmpty(weatherDataJson))
                     {
-                        City = weatherData?.City ?? string.Empty,
-                        CountryCode = weatherData?.System?.CountryCode ?? string.Empty,
-                        Description = weatherData?.WeatherList?.FirstOrDefault()?.Description ?? string.Empty,
-                    };
-                    httpDataResponse.Errors = new List<string> { weatherData?.ErrorMessage ?? string.Empty };
-                }
-                else
-                {
-                    httpDataResponse.Errors = new List<string> { responseMessage.ReasonPhrase?.ToString() ?? string.Empty };
-                }
+                        WeatherData? weatherData = JsonConvert.DeserializeObject<WeatherData>(weatherDataJson);
 
-                httpDataResponse.StatusCode = responseMessage.StatusCode;
+                        httpDataResponse.Data = new CurrentWeather
+                        {
+                            City = weatherData?.City ?? string.Empty,
+                            CountryCode = weatherData?.System?.CountryCode ?? string.Empty,
+                            Description = weatherData?.WeatherList?.FirstOrDefault()?.Description ?? string.Empty,
+                        };
+                        httpDataResponse.Errors = new List<string> { weatherData?.ErrorMessage ?? string.Empty };
+                    }
+                    else
+                    {
+                        httpDataResponse.Errors = new List<string> { responseMessage.ReasonPhrase?.ToString() ?? string.Empty };
+                    }
+
+                    httpDataResponse.StatusCode = responseMessage.StatusCode;
+                }
             }
             catch (Exception exception)
             {

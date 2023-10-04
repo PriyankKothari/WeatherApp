@@ -42,7 +42,7 @@ namespace WeatherApp.Api.Middlewares
 
                 // set StatusCode from Enum instead of integer value for readability
                 context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                await context.Response.WriteAsync("MISSING API KEY");
+                await context.Response.WriteAsJsonAsync("MISSING API KEY");
                 return;
             }
 
@@ -55,7 +55,7 @@ namespace WeatherApp.Api.Middlewares
 
                 // set StatusCode from Enum instead of integer value for readability
                 context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                await context.Response.WriteAsync($"INVALID API KEY");
+                await context.Response.WriteAsJsonAsync($"INVALID API KEY");
                 return;
             }
 

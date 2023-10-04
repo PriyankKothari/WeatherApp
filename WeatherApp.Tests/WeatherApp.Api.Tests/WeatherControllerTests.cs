@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net;
 using WeatherApp.Api.Controllers;
 using WeatherApp.Api.Models;
@@ -58,8 +60,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
-            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((BadRequestObjectResult)result).StatusCode);
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((JsonResult)result).StatusCode);
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -88,8 +89,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
-            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((BadRequestObjectResult)result).StatusCode);
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((JsonResult)result).StatusCode);
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -119,8 +119,7 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
-            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((BadRequestObjectResult)result).StatusCode);
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, ((JsonResult)result).StatusCode);
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -157,18 +156,16 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(OkObjectResult));
-            Assert.AreEqual((int)HttpStatusCode.OK, ((OkObjectResult)result).StatusCode);
+            Assert.AreEqual((int)HttpStatusCode.OK, ((JsonResult)result).StatusCode);
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
 
-            string logInformationMessage = string.Format(
-                "City: {0}, Country Code: {1}, Weather Description: {2}",
-                (((OkObjectResult)result).Value as CurrentWeather)?.City,
-                (((OkObjectResult)result).Value as CurrentWeather)?.CountryCode,
-                (((OkObjectResult)result).Value as CurrentWeather)?.Description
-            );
+            CurrentWeather? currentWeather =
+                JObject.Parse(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(((JsonResult)result)?.Value))?.ToString() ?? string.Empty).GetValue("Data")?.ToObject<CurrentWeather>();
+
+            string logInformationMessage =
+                string.Format("City: {0}, Country Code: {1}, Weather Description: {2}", currentWeather?.City, currentWeather?.CountryCode, currentWeather?.Description);
 
             _logger.Verify(
                 logger => logger.Log(
@@ -202,12 +199,12 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(NotFoundObjectResult));
-
-            NotFoundObjectResult actual = (NotFoundObjectResult)result;
-
+            JsonResult actual = (JsonResult)result;
             Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
-            Assert.AreEqual(cityNameNotFoundError, (actual.Value as List<string>)?[0]);
+
+            string? errorMessage =
+                JObject.Parse(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(actual?.Value))?.ToString() ?? string.Empty).GetValue("Errors")?.ToObject<List<string>>()?.FirstOrDefault();
+            Assert.AreEqual(cityNameNotFoundError, errorMessage);
 
             _currentWeatherHandler
                 .Verify(handler => handler.HandleAsync(It.IsAny<CurrentWeatherRequest>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -244,12 +241,11 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(UnauthorizedObjectResult));
-
-            UnauthorizedObjectResult? actual = result as UnauthorizedObjectResult;
+            JsonResult? actual = result as JsonResult;
             Assert.AreEqual((int)HttpStatusCode.Unauthorized, actual?.StatusCode);
 
-            string? errorMessage = (actual?.Value as List<string>)?[0];
+            string? errorMessage =
+                JObject.Parse(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(actual?.Value))?.ToString() ?? string.Empty).GetValue("Errors")?.ToObject<List<string>>()?.FirstOrDefault();
             Assert.IsTrue(errorMessage?.Contains(inValidApiKeyErrorMessage));
 
             _currentWeatherHandler
@@ -299,12 +295,12 @@ namespace WeatherApp.Tests.WeatherApp.Api.Tests
             IActionResult result = await controller.Index(weatherRequestModel.Object, It.IsAny<CancellationToken>()).ConfigureAwait(false);
 
             // Assert
-            Assert.IsInstanceOfType(result, typeof(OkObjectResult));
-
-            OkObjectResult? actual = result as OkObjectResult;
+            JsonResult? actual = result as JsonResult;
             Assert.AreEqual((int)HttpStatusCode.OK, actual?.StatusCode);
 
-            CurrentWeather? currentWeather = actual?.Value as CurrentWeather;
+            CurrentWeather? currentWeather =
+                JObject.Parse(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(actual?.Value))?.ToString() ?? string.Empty).GetValue("Data")?.ToObject<CurrentWeather>();
+
             Assert.AreEqual(city, currentWeather?.City);
             Assert.AreEqual(code, currentWeather?.CountryCode);
             Assert.AreEqual(desc, currentWeather?.Description);

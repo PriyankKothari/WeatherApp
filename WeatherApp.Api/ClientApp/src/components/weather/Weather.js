@@ -19,13 +19,16 @@ export class Weather extends Component {
         getCurrentWeather(location.cityname, location.countryname)
             .then(response => {
                 if (response) {
-                    if (response.status && response.status !== 200) {
-                        this.setState({ message: { errorMessage: response.error } });
+                    if (response.data) {
+                        this.setState({ message: { errorMessage: null } });
+                        this.setState({ weatherData: response.data });
+                    }
+                    else if (response.errors) {
+                        this.setState({ message: { errorMessage: response.errors.join(" ") } });
                         this.setState({ weatherData: null });
                     }
                     else {
-                        this.setState({ message: { errorMessage: null } });
-                        this.setState({ weatherData: response });
+                        this.setState({ message: { errorMessage: response } });
                     }
                 }
             })

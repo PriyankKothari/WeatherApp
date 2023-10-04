@@ -24,7 +24,8 @@ webApplicationBuilder.Services.Configure<ClientRateLimitOptions>(webApplicationB
 
 // Client Rate Limiting
 webApplicationBuilder.Services.AddMemoryCache();
-webApplicationBuilder.Services.AddSingleton<IRateLimitConfiguration, CustomRateLimitingConfiguration>();
+webApplicationBuilder.Services.AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>();
+webApplicationBuilder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 webApplicationBuilder.Services.AddInMemoryRateLimiting();
 
 // For distributed memory cache e.g. Redis
@@ -116,8 +117,8 @@ webApplication.UseMiddleware<ApiKeyAuthenticationMiddleware>();
 webApplication.UseAuthorization();
 webApplication.UseCors("CorsPolicy");
 
-// Client Rate Limiting
-webApplication.UseClientRateLimiting();
+// Client Rate Limiting Middleware
+webApplication.UseMiddleware<CustomClientRateLimitingMiddleware>();
 
 // Map Controller Route
 webApplication.MapControllerRoute(

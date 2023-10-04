@@ -4,6 +4,7 @@ using WeatherApp.Api.Models;
 using WeatherApp.Application.UseCases.Weather;
 using WeatherApp.Domain.DomainModels;
 
+
 namespace WeatherApp.Api.Controllers
 {
     /// <summary>
@@ -40,12 +41,16 @@ namespace WeatherApp.Api.Controllers
         [Route("current")]
         public async Task<IActionResult> Index([FromQuery] WeatherRequestModel weatherRequestModel, CancellationToken cancellationToken)
         {
+            IEnumerable<string>? errors = null;
+
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning(string.Join("; ", ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage)));
-                    return BadRequest(ModelState);
+                    errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage);
+
+                    _logger.LogWarning(string.Join("; ", errors));                    
+                    return new JsonResult(new { Data = default(HttpDataResponse<CurrentWeather>), Errors = errors }) { StatusCode = (int)HttpStatusCode.BadRequest };
                 }
 
                 CurrentWeatherRequest request = new()
@@ -56,25 +61,32 @@ namespace WeatherApp.Api.Controllers
 
                 var httpDataResponse = await _currentWeatherHandler.HandleAsync(request, cancellationToken).ConfigureAwait(false);
 
-                if (httpDataResponse.StatusCode == HttpStatusCode.NotFound)
-                {
-                    _logger.LogWarning(string.Join("; ", httpDataResponse.Errors));
-                    return NotFound(httpDataResponse.Errors);
-                }
+                errors = httpDataResponse.Errors;
 
                 if (httpDataResponse.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    _logger.LogWarning(string.Join("; ", httpDataResponse.Errors));
-                    return Unauthorized(httpDataResponse.Errors);
+                    _logger.LogWarning(string.Join("; ", errors));
+                    return new JsonResult(new { Data = default(HttpDataResponse<CurrentWeather>), Errors = errors }) { StatusCode = (int)HttpStatusCode.Unauthorized };
                 }
 
-                _logger.LogInformation($"City: {httpDataResponse?.Data?.City}, Country Code: {httpDataResponse?.Data?.CountryCode}, Weather Description: {httpDataResponse?.Data?.Description}");
-                return Ok(httpDataResponse?.Data);
+                if (httpDataResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.LogWarning(string.Join("; ", errors));                    
+                    return new JsonResult(new { Data = default(HttpDataResponse<CurrentWeather>), Errors = errors }) { StatusCode = (int)HttpStatusCode.NotFound };
+                }
+
+                _logger.LogInformation($"City: {httpDataResponse?.Data?.City}, Country Code: {httpDataResponse?.Data?.CountryCode}, Weather Description: {httpDataResponse?.Data?.Description}");                
+                return new JsonResult(new { Data = httpDataResponse?.Data, Errors = new List<string>() }) { StatusCode = (int)HttpStatusCode.OK };
             }
             catch (Exception exception)
             {
                 _logger.LogError($"{exception.Message} - {exception.StackTrace}");
-                return Problem(exception.Message, exception.StackTrace);
+                return new JsonResult(new
+                {
+                    Data = default(HttpDataResponse<CurrentWeather>),
+                    Errors = $"{exception.Message}{exception.StackTrace}",
+                    StatusCode = (int)HttpStatusCode.InternalServerError
+                });
             }
         }
     }
